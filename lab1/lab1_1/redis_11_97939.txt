@@ -1,0 +1,100 @@
+set one 1
+get one
+type one
+del one
+set warning "red sus"
+expire warning 1
+get warning
+keys warning
+keys squid
+set warning "red vented"
+expire warning 60
+til warning
+ttl warning
+persist warning
+ttl warning
+keys *
+set l a
+lpush l b
+del l
+lset l a
+lset l 0 a
+lset l 0 "a"
+clear
+lpush lst "somebody"
+get lst
+rpush lst "once"
+lrange lst 0 -1
+lpush lst "---"
+lrange lst 0 -1
+linsert lst after "once" "told"
+lrange lst 0 -1
+linsert lst after told the
+lrange lst 0 -1
+linsert lst befpre told me
+linsert lst before told me
+lrange lst 0 -1
+lrem lst -1 me
+lrange lst 0 -1
+linsert lst before the me
+lrange lst 0 -1
+lpop lst
+rpop lst
+lrange lst 0 -1
+lindex lst 1
+llen lst
+sadd s circle
+sadd s triangle square
+smembers s
+sadd cross
+sadd s cross
+smembers s
+srem s cross
+smembers s
+sismember s square
+sismember s cross
+scard s
+sadd playstation triangle square circle cross
+sunion s playstation
+sinter s playstation
+sdiff playstation s
+hset tome height 176
+hset tome weight 63
+hset tome age 20
+hget tome age
+get tome
+hset tome eyes 2 ears 2
+get tome eyes
+hget tome eyes
+hget tome ears
+hmget tome height weight
+hexists tome age
+hgetall tome
+hkeys tome
+hvals tome
+hdel tome eyes ears
+hkeys tome
+hlen tome
+zadd sortedset 0 zero
+zadd sortedset 1 one 2 two 3 three
+zrem sortedset two
+zascore sortedset one
+zscore sortedset one
+zscore sortedset three
+zadd sortedset 4 two
+zincrby sortedset two 5
+zincrby sortedset 5 two
+zrem sortedset two
+zrange sortedset 0 -1
+zrangebyscore sortedset 0 2
+zcard sortedset
+zcount sortedset 0 2
+geoadd cities -8.6538 40.6405 aveiro
+geoadd cities 12.4964 41.9028 rome
+geodist cities aveiro rome
+geohash cities rome
+geopos cities aveiro rome
+geopos cities *
+georadius cities -8 41 5
+georadius cities -8 41 5 km
+georadius cities -8 41 100 km

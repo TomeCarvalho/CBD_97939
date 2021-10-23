@@ -1,0 +1,1 @@
+redis-cli < names_counting.txt

@@ -1,0 +1,21 @@
+register(Sam_penguin4)
+register(CaseyG)
+register(brownsugar)
+follow(CaseyG, Sam_penguin4)
+follow(Sam_penguin4, CaseyG)
+follow(Sam_penguin4, brownsugar)
+follow(brownsugar, Sam_penguin4)
+dweed(brownsugar, Name's Zahid. Starts with a Z. Ends with a beautiful friendship?)
+sleep
+dweed(CaseyG, Frankie talked me into ordering the quinoa bowl. I feel like I just ate two pounds of air.)
+sleep
+dweed(Sam_penguin4, His eyebrows were huge... like he was an arthropod using them as a tactile sensory appendage.)
+feed(Sam_penguin4)
+feed(CaseyG)
+followers(Sam_penguin4)
+unfollow(brownsugar, Sam_penguin4)
+followers(Sam_penguin4)
+feed(brownsugar)
+follow(brownsugar, user_that_doesnt_exist)
+followers(another_non_existent_user)
+exit
