@@ -1,0 +1,2 @@
+db.phones.find().count()
+200000

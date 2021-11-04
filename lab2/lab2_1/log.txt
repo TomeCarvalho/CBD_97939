@@ -1,0 +1,744 @@
+examples> db.inventory.insertMany([
+...    { item: "journal", qty: 25, size: { h: 14, w: 21, uom: "cm" }, status: "A" },
+...    { item: "notebook", qty: 50, size: { h: 8.5, w: 11, uom: "in" }, status: "A" },
+...    { item: "paper", qty: 100, size: { h: 8.5, w: 11, uom: "in" }, status: "D" },
+...    { item: "planner", qty: 75, size: { h: 22.85, w: 30, uom: "cm" }, status: "D" },
+...    { item: "postcard", qty: 45, size: { h: 10, w: 15.25, uom: "cm" }, status: "A" }
+... ]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId("617a6294b5c786095d02645c"),
+    '1': ObjectId("617a6294b5c786095d02645d"),
+    '2': ObjectId("617a6294b5c786095d02645e"),
+    '3': ObjectId("617a6294b5c786095d02645f"),
+    '4': ObjectId("617a6294b5c786095d026460")
+  }
+}
+
+examples> db.inventory.find( {} )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645c"),
+    item: 'journal',
+    qty: 25,
+    size: { h: 14, w: 21, uom: 'cm' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645d"),
+    item: 'notebook',
+    qty: 50,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645e"),
+    item: 'paper',
+    qty: 100,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'D'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645f"),
+    item: 'planner',
+    qty: 75,
+    size: { h: 22.85, w: 30, uom: 'cm' },
+    status: 'D'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d026460"),
+    item: 'postcard',
+    qty: 45,
+    size: { h: 10, w: 15.25, uom: 'cm' },
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find( { status: "D" } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645e"),
+    item: 'paper',
+    qty: 100,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'D'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645f"),
+    item: 'planner',
+    qty: 75,
+    size: { h: 22.85, w: 30, uom: 'cm' },
+    status: 'D'
+  }
+]
+
+examples> db.inventory.find( { status: { $in: [ "A", "D" ] } } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645c"),
+    item: 'journal',
+    qty: 25,
+    size: { h: 14, w: 21, uom: 'cm' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645d"),
+    item: 'notebook',
+    qty: 50,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645e"),
+    item: 'paper',
+    qty: 100,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'D'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645f"),
+    item: 'planner',
+    qty: 75,
+    size: { h: 22.85, w: 30, uom: 'cm' },
+    status: 'D'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d026460"),
+    item: 'postcard',
+    qty: 45,
+    size: { h: 10, w: 15.25, uom: 'cm' },
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find( { status: "A", qty: { $lt: 30 } } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645c"),
+    item: 'journal',
+    qty: 25,
+    size: { h: 14, w: 21, uom: 'cm' },
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find( { $or: [ { status: "A" }, { qty: { $lt: 30 } } ] } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645c"),
+    item: 'journal',
+    qty: 25,
+    size: { h: 14, w: 21, uom: 'cm' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645d"),
+    item: 'notebook',
+    qty: 50,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d026460"),
+    item: 'postcard',
+    qty: 45,
+    size: { h: 10, w: 15.25, uom: 'cm' },
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find( {
+...      status: "A",
+...      $or: [ { qty: { $lt: 30 } }, { item: /^p/ } ]
+... } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645c"),
+    item: 'journal',
+    qty: 25,
+    size: { h: 14, w: 21, uom: 'cm' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d026460"),
+    item: 'postcard',
+    qty: 45,
+    size: { h: 10, w: 15.25, uom: 'cm' },
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find( { size: { h: 14, w: 21, uom: "cm" } } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645c"),
+    item: 'journal',
+    qty: 25,
+    size: { h: 14, w: 21, uom: 'cm' },
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find(  { size: { w: 21, h: 14, uom: "cm" } }  )
+
+
+examples> db.inventory.find( { "size.uom": "in" } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645d"),
+    item: 'notebook',
+    qty: 50,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645e"),
+    item: 'paper',
+    qty: 100,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'D'
+  }
+]
+
+examples> db.inventory.find( { "size.h": { $lt: 15 } } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645c"),
+    item: 'journal',
+    qty: 25,
+    size: { h: 14, w: 21, uom: 'cm' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645d"),
+    item: 'notebook',
+    qty: 50,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d02645e"),
+    item: 'paper',
+    qty: 100,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'D'
+  },
+  {
+    _id: ObjectId("617a6294b5c786095d026460"),
+    item: 'postcard',
+    qty: 45,
+    size: { h: 10, w: 15.25, uom: 'cm' },
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find( { "size.h": { $lt: 15 }, "size.uom": "in", status: "D" } )
+[
+  {
+    _id: ObjectId("617a6294b5c786095d02645e"),
+    item: 'paper',
+    qty: 100,
+    size: { h: 8.5, w: 11, uom: 'in' },
+    status: 'D'
+  }
+]
+
+examples> db.inventory.drop()
+true
+examples>  db.inventory.find( {} )
+
+
+examples> db.inventory.insertMany([
+...    { item: "journal", qty: 25, tags: ["blank", "red"], dim_cm: [ 14, 21 ] },
+...    { item: "notebook", qty: 50, tags: ["red", "blank"], dim_cm: [ 14, 21 ] },
+...    { item: "paper", qty: 100, tags: ["red", "blank", "plain"], dim_cm: [ 14, 21 ] },
+...    { item: "planner", qty: 75, tags: ["blank", "red"], dim_cm: [ 22.85, 30 ] },
+...    { item: "postcard", qty: 45, tags: ["blue"], dim_cm: [ 10, 15.25 ] }
+... ]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId("617a648db5c786095d026461"),
+    '1': ObjectId("617a648db5c786095d026462"),
+    '2': ObjectId("617a648db5c786095d026463"),
+    '3': ObjectId("617a648db5c786095d026464"),
+    '4': ObjectId("617a648db5c786095d026465")
+  }
+}
+
+examples> db.inventory.find( { tags: ["red", "blank"] } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026462"),
+    item: 'notebook',
+    qty: 50,
+    tags: [ 'red', 'blank' ],
+    dim_cm: [ 14, 21 ]
+  }
+]
+
+examples> db.inventory.find( { tags: { $all: ["red", "blank"] } } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026461"),
+    item: 'journal',
+    qty: 25,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026462"),
+    item: 'notebook',
+    qty: 50,
+    tags: [ 'red', 'blank' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026463"),
+    item: 'paper',
+    qty: 100,
+    tags: [ 'red', 'blank', 'plain' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026464"),
+    item: 'planner',
+    qty: 75,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 22.85, 30 ]
+  }
+]
+
+examples> db.inventory.find( { tags: "red" } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026461"),
+    item: 'journal',
+    qty: 25,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026462"),
+    item: 'notebook',
+    qty: 50,
+    tags: [ 'red', 'blank' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026463"),
+    item: 'paper',
+    qty: 100,
+    tags: [ 'red', 'blank', 'plain' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026464"),
+    item: 'planner',
+    qty: 75,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 22.85, 30 ]
+  }
+]
+
+examples> db.inventory.find( { dim_cm: { $gt: 25 } } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026464"),
+    item: 'planner',
+    qty: 75,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 22.85, 30 ]
+  }
+]
+
+examples> db.inventory.find( { dim_cm: { $gt: 15, $lt: 20 } } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026461"),
+    item: 'journal',
+    qty: 25,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026462"),
+    item: 'notebook',
+    qty: 50,
+    tags: [ 'red', 'blank' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026463"),
+    item: 'paper',
+    qty: 100,
+    tags: [ 'red', 'blank', 'plain' ],
+    dim_cm: [ 14, 21 ]
+  },
+  {
+    _id: ObjectId("617a648db5c786095d026465"),
+    item: 'postcard',
+    qty: 45,
+    tags: [ 'blue' ],
+    dim_cm: [ 10, 15.25 ]
+  }
+]
+
+examples> db.inventory.find( { dim_cm: { $elemMatch: { $gt: 22, $lt: 30 } } } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026464"),
+    item: 'planner',
+    qty: 75,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 22.85, 30 ]
+  }
+]
+
+examples> db.inventory.find( { "dim_cm.1": { $gt: 25 } } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026464"),
+    item: 'planner',
+    qty: 75,
+    tags: [ 'blank', 'red' ],
+    dim_cm: [ 22.85, 30 ]
+  }
+]
+
+examples> db.inventory.find( { "tags": { $size: 3 } } )
+[
+  {
+    _id: ObjectId("617a648db5c786095d026463"),
+    item: 'paper',
+    qty: 100,
+    tags: [ 'red', 'blank', 'plain' ],
+    dim_cm: [ 14, 21 ]
+  }
+]
+
+examples> db.inventory.drop()
+true
+
+examples> db.inventory.insertMany( [
+...    { item: "journal", qty: 25, size: { h: 14, w: 21, uom: "cm" }, status: "A" },
+...    { item: "notebook", qty: 50, size: { h: 8.5, w: 11, uom: "in" }, status: "A" },
+...    { item: "paper", qty: 100, size: { h: 8.5, w: 11, uom: "in" }, status: "D" },
+...    { item: "planner", qty: 75, size: { h: 22.85, w: 30, uom: "cm" }, status: "D" },
+...    { item: "postcard", qty: 45, size: { h: 10, w: 15.25, uom: "cm" }, status: "A" }
+... ]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId("617a6753b5c786095d026466"),
+    '1': ObjectId("617a6753b5c786095d026467"),
+    '2': ObjectId("617a6753b5c786095d026468"),
+    '3': ObjectId("617a6753b5c786095d026469"),
+    '4': ObjectId("617a6753b5c786095d02646a")
+  }
+}
+
+examples> db.inventory.insertMany( [
+...    { item: "journal", instock: [ { warehouse: "A", qty: 5 }, { warehouse: "C", qty: 15 } ] },
+...    { item: "notebook", instock: [ { warehouse: "C", qty: 5 } ] },
+...    { item: "paper", instock: [ { warehouse: "A", qty: 60 }, { warehouse: "B", qty: 15 } ] },
+...    { item: "planner", instock: [ { warehouse: "A", qty: 40 }, { warehouse: "B", qty: 5 } ] },
+...    { item: "postcard", instock: [ { warehouse: "B", qty: 15 }, { warehouse: "C", qty: 35 } ] }
+... ]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId("617a6855b5c786095d02646b"),
+    '1': ObjectId("617a6855b5c786095d02646c"),
+    '2': ObjectId("617a6855b5c786095d02646d"),
+    '3': ObjectId("617a6855b5c786095d02646e"),
+    '4': ObjectId("617a6855b5c786095d02646f")
+  }
+}
+
+examples> db.inventory.find( { "instock": { warehouse: "A", qty: 5 } } )
+[
+  {
+    _id: ObjectId("617a6855b5c786095d02646b"),
+    item: 'journal',
+    instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ]
+  }
+]
+
+examples> db.inventory.find( { 'instock.qty': { $lte: 20 } } )
+[
+  {
+    _id: ObjectId("617a6855b5c786095d02646b"),
+    item: 'journal',
+    instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646c"),
+    item: 'notebook',
+    instock: [ { warehouse: 'C', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646d"),
+    item: 'paper',
+    instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646e"),
+    item: 'planner',
+    instock: [ { warehouse: 'A', qty: 40 }, { warehouse: 'B', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646f"),
+    item: 'postcard',
+    instock: [ { warehouse: 'B', qty: 15 }, { warehouse: 'C', qty: 35 } ]
+  }
+]
+
+examples> db.inventory.find( { 'instock.0.qty': { $lte: 20 } } )
+[
+  {
+    _id: ObjectId("617a6855b5c786095d02646b"),
+    item: 'journal',
+    instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646c"),
+    item: 'notebook',
+    instock: [ { warehouse: 'C', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646f"),
+    item: 'postcard',
+    instock: [ { warehouse: 'B', qty: 15 }, { warehouse: 'C', qty: 35 } ]
+  }
+]
+
+examples> db.inventory.find( { "instock": { $elemMatch: { qty: 5, warehouse: "A" } } } )
+[
+  {
+    _id: ObjectId("617a6855b5c786095d02646b"),
+    item: 'journal',
+    instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ]
+  }
+]
+
+examples> db.inventory.find( { "instock": { $elemMatch: { qty: { $gt: 10, $lte: 20 } } } } )
+[
+  {
+    _id: ObjectId("617a6855b5c786095d02646b"),
+    item: 'journal',
+    instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646d"),
+    item: 'paper',
+    instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646f"),
+    item: 'postcard',
+    instock: [ { warehouse: 'B', qty: 15 }, { warehouse: 'C', qty: 35 } ]
+  }
+]
+
+examples> db.inventory.find( { "instock.qty": { $gt: 10,  $lte: 20 } } )
+[
+  {
+    _id: ObjectId("617a6855b5c786095d02646b"),
+    item: 'journal',
+    instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646d"),
+    item: 'paper',
+    instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646e"),
+    item: 'planner',
+    instock: [ { warehouse: 'A', qty: 40 }, { warehouse: 'B', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646f"),
+    item: 'postcard',
+    instock: [ { warehouse: 'B', qty: 15 }, { warehouse: 'C', qty: 35 } ]
+  }
+]
+
+examples> db.inventory.find( { "instock.qty": 5, "instock.warehouse": "A" } )
+[
+  {
+    _id: ObjectId("617a6855b5c786095d02646b"),
+    item: 'journal',
+    instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ]
+  },
+  {
+    _id: ObjectId("617a6855b5c786095d02646e"),
+    item: 'planner',
+    instock: [ { warehouse: 'A', qty: 40 }, { warehouse: 'B', qty: 5 } ]
+  }
+]
+
+examples> db.inventory.drop()
+true
+
+examples> db.inventory.insertMany( [
+...   { item: "journal", status: "A", size: { h: 14, w: 21, uom: "cm" }, instock: [ { warehouse: "A", qty: 5 } ] },
+...   { item: "notebook", status: "A",  size: { h: 8.5, w: 11, uom: "in" }, instock: [ { warehouse: "C", qty: 5 } ] },
+...   { item: "paper", status: "D", size: { h: 8.5, w: 11, uom: "in" }, instock: [ { warehouse: "A", qty: 60 } ] },
+...   { item: "planner", status: "D", size: { h: 22.85, w: 30, uom: "cm" }, instock: [ { warehouse: "A", qty: 40 } ] },
+...   { item: "postcard", status: "A", size: { h: 10, w: 15.25, uom: "cm" }, instock: [ { warehouse: "B", qty: 15 }, { warehouse: "C", qty: 35 } ] }
+... ]);
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId("617a6b89b5c786095d026470"),
+    '1': ObjectId("617a6b89b5c786095d026471"),
+    '2': ObjectId("617a6b89b5c786095d026472"),
+    '3': ObjectId("617a6b89b5c786095d026473"),
+    '4': ObjectId("617a6b89b5c786095d026474")
+  }
+}
+
+examples> db.inventory.find( { status: "A" }, { item: 1, status: 1 } )
+[
+  {
+    _id: ObjectId("617a6b89b5c786095d026470"),
+    item: 'journal',
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026471"),
+    item: 'notebook',
+    status: 'A'
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026474"),
+    item: 'postcard',
+    status: 'A'
+  }
+]
+
+examples> db.inventory.find( { status: "A" }, { item: 1, status: 1, _id: 0 } )
+[
+  { item: 'journal', status: 'A' },
+  { item: 'notebook', status: 'A' },
+  { item: 'postcard', status: 'A' }
+]
+
+examples> db.inventory.find( { status: "A" }, { status: 0, instock: 0 } )
+[
+  {
+    _id: ObjectId("617a6b89b5c786095d026470"),
+    item: 'journal',
+    size: { h: 14, w: 21, uom: 'cm' }
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026471"),
+    item: 'notebook',
+    size: { h: 8.5, w: 11, uom: 'in' }
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026474"),
+    item: 'postcard',
+    size: { h: 10, w: 15.25, uom: 'cm' }
+  }
+]
+
+examples> db.inventory.find(
+...    { status: "A" },
+...    { item: 1, status: 1, "size.uom": 1 }
+... )
+[
+  {
+    _id: ObjectId("617a6b89b5c786095d026470"),
+    item: 'journal',
+    status: 'A',
+    size: { uom: 'cm' }
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026471"),
+    item: 'notebook',
+    status: 'A',
+    size: { uom: 'in' }
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026474"),
+    item: 'postcard',
+    status: 'A',
+    size: { uom: 'cm' }
+  }
+]
+
+examples> db.inventory.find(
+...    { status: "A" },
+...    { "size.uom": 0 }
+... )
+[
+  {
+    _id: ObjectId("617a6b89b5c786095d026470"),
+    item: 'journal',
+    status: 'A',
+    size: { h: 14, w: 21 },
+    instock: [ { warehouse: 'A', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026471"),
+    item: 'notebook',
+    status: 'A',
+    size: { h: 8.5, w: 11 },
+    instock: [ { warehouse: 'C', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026474"),
+    item: 'postcard',
+    status: 'A',
+    size: { h: 10, w: 15.25 },
+    instock: [ { warehouse: 'B', qty: 15 }, { warehouse: 'C', qty: 35 } ]
+  }
+]
+
+examples> db.inventory.find( { status: "A" }, { item: 1, status: 1, "instock.qty": 1 } )
+[
+  {
+    _id: ObjectId("617a6b89b5c786095d026470"),
+    item: 'journal',
+    status: 'A',
+    instock: [ { qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026471"),
+    item: 'notebook',
+    status: 'A',
+    instock: [ { qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026474"),
+    item: 'postcard',
+    status: 'A',
+    instock: [ { qty: 15 }, { qty: 35 } ]
+  }
+]
+
+examples> db.inventory.find( { status: "A" }, { item: 1, status: 1, instock: { $slice: -1 } } )
+[
+  {
+    _id: ObjectId("617a6b89b5c786095d026470"),
+    item: 'journal',
+    status: 'A',
+    instock: [ { warehouse: 'A', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026471"),
+    item: 'notebook',
+    status: 'A',
+    instock: [ { warehouse: 'C', qty: 5 } ]
+  },
+  {
+    _id: ObjectId("617a6b89b5c786095d026474"),
+    item: 'postcard',
+    status: 'A',
+    instock: [ { warehouse: 'C', qty: 35 } ]
+  }
+]

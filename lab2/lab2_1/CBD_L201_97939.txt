@@ -1,0 +1,135 @@
+Start MongoDB:
+sudo mongod --dbpath ~/data/db
+
+Remove the current DB:
+db.dropDatabase()
+
+Insert one element:
+db.inventory.insertOne(
+   { item: "canvas", qty: 100, tags: ["cotton"], size: { h: 28, w: 35.5, uom: "cm" } }
+)
+
+Insert many elements:
+db.inventory.insertMany([
+   { item: "journal", qty: 25, size: { h: 14, w: 21, uom: "cm" }, status: "A" },
+   { item: "notebook", qty: 50, size: { h: 8.5, w: 11, uom: "in" }, status: "A" },
+   { item: "paper", qty: 100, size: { h: 8.5, w: 11, uom: "in" }, status: "D" },
+   { item: "planner", qty: 75, size: { h: 22.85, w: 30, uom: "cm" }, status: "D" },
+   { item: "postcard", qty: 45, size: { h: 10, w: 15.25, uom: "cm" }, status: "A" }
+]);
+
+Select all documents in the collection (SELECT * FROM inventory):
+db.inventory.find( {} )
+
+Specify equality conditions: (SELECT * FROM inventory WHERE status = "D"
+db.inventory.find( { status: "D" } )
+
+Specify Conditions Using Query Operators (SELECT * FROM inventory WHERE status in ("A", "D")):
+db.inventory.find( { status: { $in: [ "A", "D" ] } } )
+(you can express this query using the $or operator, use the $in operator rather than the $or operator when performing equality checks on the same field)
+
+Specify AND Conditions (SELECT * FROM inventory WHERE status = "A" AND qty < 30):
+db.inventory.find( { status: "A", qty: { $lt: 30 } } )
+
+Specify OR Conditions (SELECT * FROM inventory WHERE status = "A" OR qty < 30):
+db.inventory.find( { $or: [ { status: "A" }, { qty: { $lt: 30 } } ] } )
+
+Specify AND as well as OR Conditions (SELECT * FROM inventory WHERE status = "A" AND ( qty < 30 OR item LIKE "p%")):
+db.inventory.find( {
+     status: "A",
+     $or: [ { qty: { $lt: 30 } }, { item: /^p/ } ]
+} )
+
+
+--- QUERY ON EMBEDDED/NESTED DOCUMENTS ---
+
+Match an Embedded/Nested Document:
+db.inventory.find( { size: { h: 14, w: 21, uom: "cm" } } )
+
+Specify Equality Match on a Nested Field:
+db.inventory.find( { "size.uom": "in" } )
+
+Specify Match using Query Operator:
+db.inventory.find( { "size.h": { $lt: 15 } } )
+
+Specify AND Condition:
+db.inventory.find( { "size.h": { $lt: 15 }, "size.uom": "in", status: "D" } )
+
+
+--- QUERY AN ARRAY ---
+
+Match an Array (all documents where the field tags value is an array with exactly two elements, "red" and "blank", in the specified order):
+db.inventory.find( { tags: ["red", "blank"] } )
+
+Match an Array (contains both the elements "red" and "blank", without regard to order or other elements in the array):
+db.inventory.find( { tags: { $all: ["red", "blank"] } } )
+
+Query an Array for an Element:
+db.inventory.find( { tags: "red" } )
+db.inventory.find( { dim_cm: { $gt: 25 } } )
+
+Query an Array with Compound Filter Conditions on the Array Elements:
+(queries for documents where the dim_cm array contains elements that in some combination satisfy the query conditions)
+db.inventory.find( { dim_cm: { $gt: 15, $lt: 20 } } )
+
+Query for an Array Element that Meets Multiple Criteria:
+(queries for documents where the dim_cm array contains at least one element that is both greater than ($gt) 22 and less than ($lt) 30)
+db.inventory.find( { dim_cm: { $elemMatch: { $gt: 22, $lt: 30 } } } )
+
+Query for an Element by the Array Index Position:
+db.inventory.find( { "dim_cm.1": { $gt: 25 } } )
+
+Query an Array by Array Length:
+db.inventory.find( { "tags": { $size: 3 } } )
+
+
+--- QUERY AN ARRAY OF EMBEDDED DOCUMENTS ---
+
+Query for a Document Nested in an Array:
+(Equality matches on the whole embedded/nested document require an exact match of the specified document, including the field order)
+db.inventory.find( { "instock": { warehouse: "A", qty: 5 } } )
+
+Specify a Query Condition on a Field Embedded in an Array of Documents:
+db.inventory.find( { 'instock.qty': { $lte: 20 } } )
+
+Use the Array Index to Query for a Field in the Embedded Document:
+db.inventory.find( { 'instock.0.qty': { $lte: 20 } } )
+
+A Single Nested Document Meets Multiple Query Conditions on Nested Fields:
+db.inventory.find( { "instock": { $elemMatch: { qty: 5, warehouse: "A" } } } )
+db.inventory.find( { "instock": { $elemMatch: { qty: { $gt: 10, $lte: 20 } } } } )
+
+Combination of Elements Satisfies the Criteria:
+db.inventory.find( { "instock.qty": { $gt: 10,  $lte: 20 } } )
+db.inventory.find( { "instock.qty": 5, "instock.warehouse": "A" } )
+
+
+--- PROJECT FIELDS TO RETURN FROM QUERY ---
+
+Return the Specified Fields and the _id Field Only (SELECT _id, item, status from inventory WHERE status = "A"):
+db.inventory.find( { status: "A" }, { item: 1, status: 1 } )
+
+Suppress _id Field (SELECT item, status from inventory WHERE status = "A"):
+db.inventory.find( { status: "A" }, { item: 1, status: 1, _id: 0 } )
+
+Return All But the Excluded Fields:
+db.inventory.find( { status: "A" }, { status: 0, instock: 0 } )
+
+Return Specific Fields in Embedded Documents
+db.inventory.find(
+   { status: "A" },
+   { item: 1, status: 1, "size.uom": 1 }
+)
+
+Suppress Specific Fields in Embedded Documents:
+(Starting in MongoDB 4.4, you can also specify embedded fields using the nested form, e.g. { size: { uom: 0 } }.)
+db.inventory.find(
+   { status: "A" },
+   { "size.uom": 0 }
+)
+
+Projection on Embedded Documents in an Array:
+db.inventory.find( { status: "A" }, { item: 1, status: 1, "instock.qty": 1 } )
+
+Project Specific Array Elements in the Returned Array:
+db.inventory.find( { status: "A" }, { item: 1, status: 1, instock: { $slice: -1 } } )
