@@ -236,7 +236,12 @@ public class Main {
     // d)
 
     public static int countLocalidades(MongoCollection<Document> restaurants) {
-        return List.of(restaurants.aggregate(List.of(Aggregates.group("$localidade")))).size();
+        AggregateIterable<Document> iterable = restaurants.aggregate(List.of(Aggregates.group("$localidade")));
+        // TODO: is there a way to avoid such a cringe loop?
+        int count = 0;
+        for (Document doc : iterable)
+            count++;
+        return count;
     }
 
     public static Map<String, Integer> countRestByLocalidade(MongoCollection<Document> restaurants) {
