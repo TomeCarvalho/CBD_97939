@@ -8,8 +8,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -24,9 +23,18 @@ public class Main {
 //            findRestaurants(restaurants);
 //            query1(restaurants);
 //            query2(restaurants);
-            query3(restaurants);
+//            query3(restaurants);
 //            query4(restaurants);
 //            query5(restaurants);
+            System.out.println("Numero de localidades distintas: " + countLocalidades(restaurants)); // 6
+
+            StringBuilder sb = new StringBuilder("Numero de restaurantes por localidade:");
+            countRestByLocalidade(restaurants).forEach((location, count) -> sb.append("\n -> ").append(location).append(" - ").append(count));
+            System.out.println(sb);
+
+            StringBuilder sb2 = new StringBuilder("Nome de restaurantes contendo ").append("'Park' ").append("no nome:");
+            getRestWithNameCloserTo(restaurants, "Park").forEach((name) -> sb2.append("\n -> ").append(name));
+            System.out.println(sb2);
         }
     }
 
@@ -221,5 +229,33 @@ public class Main {
         FindIterable<Document> docsIterable = restaurants.find(
                 Filters.eq("localidade", "Bronx")
         ).limit(15).sort(Sorts.ascending("nome"));
+        for (Document doc : docsIterable)
+            System.out.println(doc.toJson());
+    }
+
+    // d)
+
+    public static int countLocalidades(MongoCollection<Document> restaurants) {
+        return List.of(restaurants.aggregate(List.of(Aggregates.group("$localidade")))).size();
+    }
+
+    public static Map<String, Integer> countRestByLocalidade(MongoCollection<Document> restaurants) {
+        AggregateIterable<Document> res = restaurants.aggregate(
+                List.of(Aggregates.group("$localidade", Accumulators.sum("count", 1)))
+        );
+        Map<String, Integer> map = new HashMap<>();
+        for (Document doc : res)
+            map.put(doc.getString("_id"), doc.getInteger("count"));
+        return map;
+    }
+
+    public static List<String> getRestWithNameCloserTo(MongoCollection<Document> restaurants, String name) {
+        FindIterable<Document> docsIterable = restaurants.find(
+                Filters.regex("nome", name)
+        );
+        List<String> list = new ArrayList<>();
+        for (Document doc : docsIterable)
+            list.add(doc.getString("nome"));
+        return list;
     }
 }
