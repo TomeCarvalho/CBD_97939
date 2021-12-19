@@ -1,0 +1,981 @@
+Coleção dbd
+É uma coleção que armazena resultados de partidas do jogo multijogador "Dead by Daylight".
+O jogo tem dois lados: killer (apenas um) e survivors (quatro).
+Ocorre num mapa, que pertence a um "realm" (um realm tem um ou mais mapas).
+
+O killer e os survivors partilham os seguintes campos:
+ - player (username do jogador)
+ - grade (número entre 1 e 20 que efetivamente representa o tempo de jogo no último mês)
+ - perks*1 (habilidades que os jogadores podem equipar, até 4)
+ - score*2 (pontos ganhos em várias categorias na partida)
+ 
+ *1 os perks de killer são diferentes dos de survivor
+   assume-se que todos os jogadores utilizam sempre 4 perks
+ *2 as categorias de killer e survivor são diferentes, mas são 4 categorias para ambos
+
+O killer tem ainda os seguintes campos:
+ - character (nome do killer, isto é, a personagem, não o jogador)
+ - kills (número de survivors que matou na partida)
+ - hooks (número de vezes que colocou um survivor num gancho*3 na partida)
+ - result (resultado da partida, para efeitos de ranking)
+
+ *3 é necessário colocar um survivor num gancho 3 vezes para o matar
+
+Os survivors têm ainda os seguintes campos:
+ - escaped (booleano que indica se sobreviveram ou não)
+
+Fora do killer e survivor tem-se mapinfo, que mostra informação sobre o mapa (realm e map) 
+
+O ficheiro dbddb.js contém funções (generateMatch/generateMatches) para inserir dados gerados na DB.
+Utiliza conjuntos de valores pré-definidos para mapas, jogadores, killer characters, perks e resultados.
+Outros valores, como os pontos em cada categoria, são gerados aleatóriamente entre certos valores.
+
+Queries com find:
+
+1. Encontrar todas as partidas em que o jogador "Fungoose" jogou com o killer "Shape"
+db.dbd.find({"killer.player": "Fungoose", "killer.character":"Shape"})
+
+2. Contar o número de partidas jogadas pelo jogador "Trivialiac" (de killer ou de survivor)
+db.dbd.find({$or: [{"killer.player": "Trivialiac"}, {"survivors.player": "Trivialiac"}]}).count()
+
+3. Contar o número de partidas em que o killer obteve pelo menos 3 kills
+db.dbd.find({"killer.kills": {$gte: 3}}).count()
+
+4. Mostrar a quantidade de hooks de partidas em que o killer obteve 2 kills e resultado de "Entity Displeased"
+db.dbd.find({"killer.kills": 2, "killer.result": "Entity Displeased"}, {"killer.hooks": 1})
+
+5. Listar as partidas ordenadas (decrescente) por: número de kills, número de hooks, mostrando apenas as 3 primeiras
+db.dbd.find().sort({"killer.kills":-1}, {"killer.hooks":-1}).limit(3)
+
+6. Mostrar o resultado dos survivors nas partidas em que os jogadores "Fungoose", "Uncharted" e "praxz" jogaram juntos como survivors
+db.dbd.find({"survivors.player": {$all: ["Fungoose", "Uncharted", "praxz"]}}, {"survivors.escaped":1, "survivors.player":1})
+
+
+Queries com aggregate:
+
+1. Calcular a média de kills do jogador "Otzdarva" // TODO: _id is null, for some reason
+db.dbd.aggregate( [ { $match: { "killer.player": "Otzdarva" } }, { $group: { _id: { $getField: "killer.player" }, avg_kills: { $avg: "$killer.kills" } } }])
+
+2. Calcular a média de kills e hooks para cada killer (personagem), ordenando por ordem decrescente
+db.dbd.aggregate(
+  [
+    {
+      $group:
+      {
+        _id: "$killer.character",
+        avg_kills: {$avg: "$killer.kills"},
+        avg_hooks: {$avg: "$killer.hooks"}
+      }
+    },
+    {
+      $sort:
+      {
+        avg_kills: -1,
+        avg_hooks: -1
+      }
+    }
+  ]
+)
+
+3. Contar o número de jogos de cada killer (personagem)
+db.dbd.aggregate(
+  [
+    {
+      $group:
+      {
+        _id: "$killer.character",
+        num_games: {$sum: 1}
+      }
+    }
+  ]
+)
+
+4. Apresentar as partidas adicionando um campo total_score (soma dos 4 scores) para killer (com limit 1 para um resultado mais pequeno)
+db.dbd.aggregate(
+  [
+    {
+      $addFields:
+      {
+        "killer.total_score": {$add: ["$killer.score.brutality", "$killer.score.deviousness", "$killer.score.hunter", "$killer.score.sacrifice"]}
+      }
+    },
+    {
+      $limit: 1
+    }
+  ]
+)
+
+5. Apresentar o "escape rate" para cada mapa
+db.dbd.aggregate(
+  [
+    {
+      $group:
+      {
+        _id: "$mapinfo.map",
+        avg_kills: {$avg: "$killer.kills"},
+      }
+    },
+    {
+      $project:
+      {
+        escape_rate: {$divide: [{$subtract: [4, "$avg_kills"]}, 4]}
+      }
+    }
+  ]
+)
+
+6. Para cada realm, mostrar os mapas que tem (que foram jogados nas partidas)
+db.dbd.aggregate(
+  [
+    {
+      $group:
+      {
+        _id: "$mapinfo.realm",
+        maps: {$addToSet: "$mapinfo.map"}
+      }
+    }
+  ]
+)
+
+Resultados das queries:
+
+Find:
+1. Encontrar todas as partidas em que o jogador "Fungoose" jogou com o killer "Shape"
+[
+  {
+    _id: ObjectId("61966ae6910f581bec13ea93"),
+    mapinfo: { realm: 'Crotus Prenn Asylum', map: 'Disturbed Ward' },
+    killer: {
+      player: 'Fungoose',
+      grade: 17,
+      character: 'Shape',
+      perks: [
+        'Sloppy Butcher',
+        'Save The Best For Last',
+        "A Nurse's Calling",
+        'Tinkerer'
+      ],
+      kills: 1,
+      hooks: 3,
+      result: 'Entity Displeased',
+      score: {
+        brutality: 5980,
+        deviousness: 2897,
+        hunter: 2295,
+        sacrifice: 6028
+      }
+    },
+    survivors: [
+      {
+        player: 'Ev3ntic',
+        grade: 5,
+        perks: [
+          'Decisive Strike',
+          'Boon: Shadow Step',
+          'Boon: Circle of Healing',
+          "We're Gonna Live Forever"
+        ],
+        escaped: true,
+        score: {
+          objectives: 6462,
+          survival: 6723,
+          altruism: 7233,
+          boldness: 5048
+        }
+      },
+      {
+        player: 'Uncharted',
+        grade: 14,
+        perks: [ 'Dead Hard', 'Decisive Strike', 'Kindred', 'Spine Chill' ],
+        escaped: true,
+        score: {
+          objectives: 6974,
+          survival: 2492,
+          altruism: 7433,
+          boldness: 3715
+        }
+      },
+      {
+        player: 'praxz',
+        grade: 15,
+        perks: [
+          'Boon: Shadow Step',
+          'Kindred',
+          'Unbreakable',
+          'Borrowed Time'
+        ],
+        escaped: false,
+        score: {
+          objectives: 6957,
+          survival: 6994,
+          altruism: 4137,
+          boldness: 6580
+        }
+      },
+      {
+        player: 'Yerv',
+        grade: 11,
+        perks: [
+          'Kindred',
+          'Boon: Shadow Step',
+          'Iron Will',
+          "We're Gonna Live Forever"
+        ],
+        escaped: true,
+        score: {
+          objectives: 4871,
+          survival: 2243,
+          altruism: 5514,
+          boldness: 2599
+        }
+      }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13eaa9"),
+    mapinfo: { realm: 'Haddonfield', map: 'Lampkin Lane' },
+    killer: {
+      player: 'Fungoose',
+      grade: 11,
+      character: 'Shape',
+      perks: [
+        'Corrupt Intervention',
+        'Sloppy Butcher',
+        "A Nurse's Calling",
+        'Infectious Fright'
+      ],
+      kills: 0,
+      hooks: 0,
+      result: 'Entity Displeased',
+      score: {
+        brutality: 4298,
+        deviousness: 5740,
+        hunter: 6397,
+        sacrifice: 7102
+      }
+    },
+    survivors: [
+      {
+        player: 'Yerv',
+        grade: 17,
+        perks: [
+          'Unbreakable',
+          'Kindred',
+          'Boon: Circle of Healing',
+          'Dead Hard'
+        ],
+        escaped: true,
+        score: {
+          objectives: 7334,
+          survival: 3924,
+          altruism: 3519,
+          boldness: 6054
+        }
+      },
+      {
+        player: 'praxz',
+        grade: 16,
+        perks: [
+          'Spine Chill',
+          "We're Gonna Live Forever",
+          'Iron Will',
+          'Decisive Strike'
+        ],
+        escaped: true,
+        score: {
+          objectives: 3732,
+          survival: 7152,
+          altruism: 4130,
+          boldness: 5073
+        }
+      },
+      {
+        player: 'Otzdarva',
+        grade: 5,
+        perks: [
+          'Boon: Circle of Healing',
+          'Decisive Strike',
+          'Kindred',
+          'Unbreakable'
+        ],
+        escaped: true,
+        score: {
+          objectives: 6296,
+          survival: 7150,
+          altruism: 3724,
+          boldness: 2167
+        }
+      },
+      {
+        player: 'Trivialiac',
+        grade: 15,
+        perks: [
+          'Kindred',
+          "We're Gonna Live Forever",
+          'Decisive Strike',
+          'Boon: Circle of Healing'
+        ],
+        escaped: true,
+        score: {
+          objectives: 4202,
+          survival: 6340,
+          altruism: 4814,
+          boldness: 6907
+        }
+      }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13eab2"),
+    mapinfo: { realm: 'Crotus Prenn Asylum', map: "Father Campbell's Chapel" },
+    killer: {
+      player: 'Fungoose',
+      grade: 7,
+      character: 'Shape',
+      perks: [
+        'Hex: Ruin',
+        'Infectious Fright',
+        'Sloppy Butcher',
+        'Save The Best For Last'
+      ],
+      kills: 2,
+      hooks: 10,
+      result: 'Brutal Killer',
+      score: {
+        brutality: 6611,
+        deviousness: 4455,
+        hunter: 2606,
+        sacrifice: 4076
+      }
+    },
+    survivors: [
+      {
+        player: 'Yerv',
+        grade: 4,
+        perks: [
+          'Borrowed Time',
+          'Decisive Strike',
+          "We're Gonna Live Forever",
+          'Boon: Circle of Healing'
+        ],
+        escaped: false,
+        score: {
+          objectives: 7771,
+          survival: 6984,
+          altruism: 3489,
+          boldness: 4043
+        }
+      },
+      {
+        player: 'Ev3ntic',
+        grade: 2,
+        perks: [
+          'Boon: Shadow Step',
+          'Borrowed Time',
+          'Kindred',
+          'Iron Will'
+        ],
+        escaped: false,
+        score: {
+          objectives: 5751,
+          survival: 3620,
+          altruism: 6474,
+          boldness: 2702
+        }
+      },
+      {
+        player: 'Otzdarva',
+        grade: 10,
+        perks: [ 'Iron Will', 'Kindred', 'Borrowed Time', 'Decisive Strike' ],
+        escaped: true,
+        score: {
+          objectives: 6907,
+          survival: 7696,
+          altruism: 7321,
+          boldness: 6371
+        }
+      },
+      {
+        player: 'Trivialiac',
+        grade: 9,
+        perks: [
+          'Decisive Strike',
+          'Spine Chill',
+          'Kindred',
+          'Boon: Circle of Healing'
+        ],
+        escaped: true,
+        score: {
+          objectives: 5496,
+          survival: 5000,
+          altruism: 5563,
+          boldness: 3512
+        }
+      }
+    ]
+  }
+]
+
+2. Contar o número de partidas jogadas pelo jogador "Trivialiac" (de killer ou de survivor)
+49
+
+3. Contar o número de partidas em que o killer obteve pelo menos 3 kills
+44
+
+4. Mostrar a quantidade de hooks de partidas em que o killer obteve 2 kills e resultado de "Entity Displeased"
+[
+  { _id: ObjectId("61966ae6910f581bec13ea88"), killer: { hooks: 6 } },
+  { _id: ObjectId("61966ae6910f581bec13ea95"), killer: { hooks: 10 } },
+  { _id: ObjectId("61966ae6910f581bec13ea9e"), killer: { hooks: 6 } },
+  { _id: ObjectId("61966ae6910f581bec13eaaa"), killer: { hooks: 6 } },
+  { _id: ObjectId("61966ae6910f581bec13eab8"), killer: { hooks: 6 } },
+  { _id: ObjectId("61966ae6910f581bec13eac0"), killer: { hooks: 6 } }
+]
+
+5. Listar as partidas ordenadas (decrescente) por: número de kills, número de hooks, mostrando apenas as 3 primeiras
+[
+  {
+    _id: ObjectId("61966ae6910f581bec13ea76"),
+    mapinfo: { realm: 'The MacMillan Estate', map: 'Ironworks of Misery' },
+    killer: {
+      player: 'Ev3ntic',
+      grade: 3,
+      character: 'Nurse',
+      perks: [
+        'Discordance',
+        'Tinkerer',
+        'Pop Goes The Weasel',
+        'Corrupt Intervention'
+      ],
+      kills: 4,
+      hooks: 12,
+      result: 'Merciless Killer',
+      score: {
+        brutality: 5494,
+        deviousness: 4257,
+        hunter: 4997,
+        sacrifice: 3179
+      }
+    },
+    survivors: [
+      {
+        player: 'Yerv',
+        grade: 16,
+        perks: [
+          'Iron Will',
+          'Boon: Circle of Healing',
+          'Spine Chill',
+          "We're Gonna Live Forever"
+        ],
+        escaped: false,
+        score: {
+          objectives: 7118,
+          survival: 6284,
+          altruism: 3759,
+          boldness: 5797
+        }
+      },
+      {
+        player: 'Fungoose',
+        grade: 13,
+        perks: [
+          'Boon: Circle of Healing',
+          'Dead Hard',
+          'Unbreakable',
+          "We're Gonna Live Forever"
+        ],
+        escaped: false,
+        score: {
+          objectives: 5370,
+          survival: 7600,
+          altruism: 7242,
+          boldness: 4078
+        }
+      },
+      {
+        player: 'Uncharted',
+        grade: 1,
+        perks: [
+          "We're Gonna Live Forever",
+          'Boon: Circle of Healing',
+          'Dead Hard',
+          'Kindred'
+        ],
+        escaped: false,
+        score: {
+          objectives: 4022,
+          survival: 4073,
+          altruism: 2911,
+          boldness: 4423
+        }
+      },
+      {
+        player: 'Otzdarva',
+        grade: 19,
+        perks: [
+          "We're Gonna Live Forever",
+          'Boon: Shadow Step',
+          'Kindred',
+          'Decisive Strike'
+        ],
+        escaped: false,
+        score: {
+          objectives: 2819,
+          survival: 4935,
+          altruism: 5216,
+          boldness: 5596
+        }
+      }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13ea74"),
+    mapinfo: { realm: 'Haddonfield', map: 'Lampkin Lane' },
+    killer: {
+      player: 'ZubatLEL',
+      grade: 1,
+      character: 'Deathslinger',
+      perks: [
+        "A Nurse's Calling",
+        'Tinkerer',
+        'Barbecue & Chilli',
+        'Hex: Ruin'
+      ],
+      kills: 4,
+      hooks: 12,
+      result: 'Ruthless Killer',
+      score: {
+        brutality: 7804,
+        deviousness: 2970,
+        hunter: 7750,
+        sacrifice: 4182
+      }
+    },
+    survivors: [
+      {
+        player: 'Uncharted',
+        grade: 13,
+        perks: [
+          'Boon: Shadow Step',
+          'Kindred',
+          'Iron Will',
+          'Borrowed Time'
+        ],
+        escaped: false,
+        score: {
+          objectives: 7547,
+          survival: 3236,
+          altruism: 3834,
+          boldness: 6165
+        }
+      },
+      {
+        player: 'Trivialiac',
+        grade: 3,
+        perks: [
+          'Boon: Circle of Healing',
+          'Iron Will',
+          'Kindred',
+          "We're Gonna Live Forever"
+        ],
+        escaped: false,
+        score: {
+          objectives: 4662,
+          survival: 7752,
+          altruism: 4907,
+          boldness: 4840
+        }
+      },
+      {
+        player: 'Ev3ntic',
+        grade: 3,
+        perks: [
+          'Kindred',
+          'Dead Hard',
+          'Borrowed Time',
+          "We're Gonna Live Forever"
+        ],
+        escaped: false,
+        score: {
+          objectives: 4472,
+          survival: 3050,
+          altruism: 5200,
+          boldness: 4853
+        }
+      },
+      {
+        player: 'Ralph',
+        grade: 2,
+        perks: [
+          'Borrowed Time',
+          'Iron Will',
+          'Dead Hard',
+          'Boon: Shadow Step'
+        ],
+        escaped: false,
+        score: {
+          objectives: 5165,
+          survival: 3138,
+          altruism: 5173,
+          boldness: 6900
+        }
+      }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13ea71"),
+    mapinfo: { realm: 'The MacMillan Estate', map: 'Coal Tower' },
+    killer: {
+      player: 'ZubatLEL',
+      grade: 5,
+      character: 'Executioner',
+      perks: [
+        'Hex: Ruin',
+        "A Nurse's Calling",
+        'Pop Goes The Weasel',
+        'Discordance'
+      ],
+      kills: 4,
+      hooks: 12,
+      result: 'Ruthless Killer',
+      score: {
+        brutality: 2559,
+        deviousness: 4579,
+        hunter: 5543,
+        sacrifice: 6776
+      }
+    },
+    survivors: [
+      {
+        player: 'Ev3ntic',
+        grade: 2,
+        perks: [
+          'Dead Hard',
+          "We're Gonna Live Forever",
+          'Boon: Shadow Step',
+          'Unbreakable'
+        ],
+        escaped: false,
+        score: {
+          objectives: 5025,
+          survival: 7131,
+          altruism: 5998,
+          boldness: 4977
+        }
+      },
+      {
+        player: 'Fungoose',
+        grade: 20,
+        perks: [
+          'Dead Hard',
+          "We're Gonna Live Forever",
+          'Borrowed Time',
+          'Boon: Circle of Healing'
+        ],
+        escaped: false,
+        score: {
+          objectives: 6270,
+          survival: 5641,
+          altruism: 5133,
+          boldness: 7681
+        }
+      },
+      {
+        player: 'Yerv',
+        grade: 7,
+        perks: [
+          'Boon: Circle of Healing',
+          'Kindred',
+          'Boon: Shadow Step',
+          'Decisive Strike'
+        ],
+        escaped: false,
+        score: {
+          objectives: 6698,
+          survival: 5440,
+          altruism: 2221,
+          boldness: 2993
+        }
+      },
+      {
+        player: 'Ralph',
+        grade: 9,
+        perks: [
+          "We're Gonna Live Forever",
+          'Decisive Strike',
+          'Spine Chill',
+          'Kindred'
+        ],
+        escaped: false,
+        score: {
+          objectives: 7033,
+          survival: 7100,
+          altruism: 4793,
+          boldness: 4162
+        }
+      }
+    ]
+  }
+]
+
+6. Mostrar o resultado dos survivors nas partidas em que os jogadores "Fungoose", "Uncharted" e "praxz" jogaram juntos como survivors
+[
+  {
+    _id: ObjectId("61966ae6910f581bec13ea70"),
+    survivors: [
+      { player: 'Otzdarva', escaped: true },
+      { player: 'Uncharted', escaped: true },
+      { player: 'Fungoose', escaped: true },
+      { player: 'praxz', escaped: true }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13ea7a"),
+    survivors: [
+      { player: 'Fungoose', escaped: false },
+      { player: 'Uncharted', escaped: false },
+      { player: 'ZubatLEL', escaped: false },
+      { player: 'praxz', escaped: false }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13ea7d"),
+    survivors: [
+      { player: 'Uncharted', escaped: true },
+      { player: 'praxz', escaped: false },
+      { player: 'Fungoose', escaped: true },
+      { player: 'Otzdarva', escaped: false }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13ea84"),
+    survivors: [
+      { player: 'ZubatLEL', escaped: false },
+      { player: 'praxz', escaped: false },
+      { player: 'Fungoose', escaped: false },
+      { player: 'Uncharted', escaped: false }
+    ]
+  },
+  {
+    _id: ObjectId("61966ae6910f581bec13eab8"),
+    survivors: [
+      { player: 'Uncharted', escaped: true },
+      { player: 'praxz', escaped: false },
+      { player: 'ZubatLEL', escaped: false },
+      { player: 'Fungoose', escaped: true }
+    ]
+  }
+]
+
+Queries com aggregate:
+
+1.
+[ { _id: null, avg_kills: 2.0833333333333335 } ]
+
+2.
+[
+  {
+    _id: 'Nurse',
+    avg_kills: 3.1666666666666665,
+    avg_hooks: 9.833333333333334
+  },
+  { _id: 'Legion', avg_kills: 3, avg_hooks: 11 },
+  {
+    _id: 'Plague',
+    avg_kills: 2.6666666666666665,
+    avg_hooks: 8.88888888888889
+  },
+  {
+    _id: 'Huntress',
+    avg_kills: 2.6666666666666665,
+    avg_hooks: 8.666666666666666
+  },
+  {
+    _id: 'Nightmare',
+    avg_kills: 2.6666666666666665,
+    avg_hooks: 8.666666666666666
+  },
+  { _id: 'Doctor', avg_kills: 2.5, avg_hooks: 9.5 },
+  { _id: 'Executioner', avg_kills: 2.5, avg_hooks: 8 },
+  { _id: 'Nemesis', avg_kills: 2.4, avg_hooks: 7.6 },
+  {
+    _id: 'Pig',
+    avg_kills: 2.3333333333333335,
+    avg_hooks: 8.333333333333334
+  },
+  {
+    _id: 'Blight',
+    avg_kills: 2.3333333333333335,
+    avg_hooks: 7.666666666666667
+  },
+  { _id: 'Deathslinger', avg_kills: 2.25, avg_hooks: 10.25 },
+  { _id: 'Oni', avg_kills: 2.25, avg_hooks: 10.25 },
+  { _id: 'Artist', avg_kills: 2, avg_hooks: 10 },
+  { _id: 'Cannibal', avg_kills: 2, avg_hooks: 8.8 },
+  { _id: 'Clown', avg_kills: 2, avg_hooks: 6 },
+  {
+    _id: 'Wraith',
+    avg_kills: 1.8333333333333333,
+    avg_hooks: 7.833333333333333
+  },
+  { _id: 'Spirit', avg_kills: 1.8, avg_hooks: 7 },
+  {
+    _id: 'Hag',
+    avg_kills: 1.6666666666666667,
+    avg_hooks: 7.666666666666667
+  },
+  { _id: 'Hillbilly', avg_kills: 1.6666666666666667, avg_hooks: 7 },
+  { _id: 'Trapper', avg_kills: 1, avg_hooks: 5.285714285714286 }
+]
+
+3.
+[
+  { _id: 'Trapper', num_games: 7 },
+  { _id: 'Nurse', num_games: 6 },
+  { _id: 'Doctor', num_games: 6 },
+  { _id: 'Wraith', num_games: 6 },
+  { _id: 'Nemesis', num_games: 5 },
+  { _id: 'Hag', num_games: 6 },
+  { _id: 'Clown', num_games: 1 },
+  { _id: 'Huntress', num_games: 3 },
+  { _id: 'Blight', num_games: 3 },
+  { _id: 'Deathslinger', num_games: 4 },
+  { _id: 'Pig', num_games: 6 },
+  { _id: 'Trickster', num_games: 1 },
+  { _id: 'Plague', num_games: 9 },
+  { _id: 'Spirit', num_games: 5 },
+  { _id: 'Cannibal', num_games: 5 },
+  { _id: 'Nightmare', num_games: 3 },
+  { _id: 'Legion', num_games: 1 },
+  { _id: 'Executioner', num_games: 4 },
+  { _id: 'Ghost Face', num_games: 2 },
+  { _id: 'Oni', num_games: 4 }
+]
+
+4.
+[
+  {
+    _id: ObjectId("61966ae6910f581bec13ea6d"),
+    mapinfo: { realm: 'The MacMillan Estate', map: 'Ironworks of Misery' },
+    killer: {
+      player: 'Uncharted',
+      grade: 6,
+      character: 'Plague',
+      perks: [
+        'Tinkerer',
+        'Infectious Fright',
+        'Barbecue & Chilli',
+        'Hex: Ruin'
+      ],
+      kills: 0,
+      hooks: 0,
+      result: 'Entity Displeased',
+      score: {
+        brutality: 5436,
+        deviousness: 6069,
+        hunter: 4180,
+        sacrifice: 6512
+      },
+      total_score: 22197
+    },
+    survivors: [
+      {
+        player: 'ZubatLEL',
+        grade: 6,
+        perks: [ 'Kindred', 'Dead Hard', 'Decisive Strike', 'Unbreakable' ],
+        escaped: true,
+        score: {
+          objectives: 5664,
+          survival: 6001,
+          altruism: 7312,
+          boldness: 5447
+        }
+      },
+      {
+        player: 'Otzdarva',
+        grade: 2,
+        perks: [
+          'Kindred',
+          'Decisive Strike',
+          'Boon: Circle of Healing',
+          'Dead Hard'
+        ],
+        escaped: true,
+        score: {
+          objectives: 3292,
+          survival: 5168,
+          altruism: 5878,
+          boldness: 5323
+        }
+      },
+      {
+        player: 'Ev3ntic',
+        grade: 1,
+        perks: [
+          'Borrowed Time',
+          'Decisive Strike',
+          'Boon: Shadow Step',
+          'Iron Will'
+        ],
+        escaped: true,
+        score: {
+          objectives: 4257,
+          survival: 3170,
+          altruism: 6405,
+          boldness: 6239
+        }
+      },
+      {
+        player: 'Yerv',
+        grade: 2,
+        perks: [
+          'Unbreakable',
+          'Boon: Circle of Healing',
+          'Boon: Shadow Step',
+          'Dead Hard'
+        ],
+        escaped: true,
+        score: {
+          objectives: 2491,
+          survival: 6761,
+          altruism: 4580,
+          boldness: 6072
+        }
+      }
+    ]
+  }
+]
+
+5.
+[
+  { _id: 'The Pale Rose', escape_rate: 0.3928571428571429 },
+  { _id: 'Disturbed Ward', escape_rate: 0.4107142857142857 },
+  { _id: 'Suffocation Pit', escape_rate: 0.44999999999999996 },
+  { _id: 'Grim Pantry', escape_rate: 0.675 },
+  { _id: 'Groaning Storehouse', escape_rate: 0.55 },
+  { _id: 'Coal Tower', escape_rate: 0.5625 },
+  { _id: 'Shelter Woods', escape_rate: 0.5 },
+  { _id: 'Lampkin Lane', escape_rate: 0.4722222222222222 },
+  { _id: 'Ironworks of Misery', escape_rate: 0.41666666666666663 },
+  { _id: "Father Campbell's Chapel", escape_rate: 0.5625 }
+]
+
+6.
+[
+  { _id: 'Backwater Swamp', maps: [ 'The Pale Rose', 'Grim Pantry' ] },
+  {
+    _id: 'The MacMillan Estate',
+    maps: [
+      'Groaning Storehouse',
+      'Coal Tower',
+      'Shelter Woods',
+      'Ironworks of Misery',
+      'Suffocation Pit'
+    ]
+  },
+  { _id: 'Haddonfield', maps: [ 'Lampkin Lane' ] },
+  {
+    _id: 'Crotus Prenn Asylum',
+    maps: [ 'Disturbed Ward', "Father Campbell's Chapel" ]
+  }
+]
