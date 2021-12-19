@@ -1,0 +1,20 @@
+[
+    {
+      "[json]": "{\"video_id\": 1, \"username\": \"mikerotch\", \"id\": 3, \"ts\": \"2021-12-11 16:55:12.000Z\", \"type\": \"play\", \"video_ts\": 240}"
+    },
+    {
+      "[json]": "{\"video_id\": 1, \"username\": \"mikerotch\", \"id\": 2, \"ts\": \"2021-12-11 16:55:02.000Z\", \"type\": \"pause\", \"video_ts\": 240}"
+    },
+    {
+      "[json]": "{\"video_id\": 1, \"username\": \"mikerotch\", \"id\": 1, \"ts\": \"2021-12-11 16:51:02.000Z\", \"type\": \"play\", \"video_ts\": 0}"
+    },
+    {
+      "[json]": "{\"video_id\": 1, \"username\": \"mikerotch\", \"id\": 5, \"ts\": \"2021-12-11 16:55:30.000Z\", \"type\": \"play\", \"video_ts\": 244}"
+    },
+    {
+      "[json]": "{\"video_id\": 1, \"username\": \"mikerotch\", \"id\": 6, \"ts\": \"2021-12-11 16:55:40.000Z\", \"type\": \"stop\", \"video_ts\": 254}"
+    },
+    {
+      "[json]": "{\"video_id\": 1, \"username\": \"mikerotch\", \"id\": 4, \"ts\": \"2021-12-11 16:55:16.000Z\", \"type\": \"pause\", \"video_ts\": 244}"
+    }
+  ]

@@ -1,0 +1,83 @@
+create keyspace videoP3 with replication = {'class': 'SimpleStrategy', 'replication_factor': 1}
+
+use videoP3;
+
+-- Table creation
+create table users
+(
+    username  varchar,
+    firstname varchar,
+    lastname  varchar,
+    primary key (username)
+);
+
+-- Insert
+insert into users(username, firstname, lastname)
+values ('cc', 'Carlos', 'Costa');
+insert into users(username, firstname, lastname)
+values ('jlo', 'Jose,', 'Luis');
+insert into users(username, firstname, lastname)
+values ('tomec', 'Tomé', 'Carvalho');
+insert into users(username, firstname, lastname)
+values ('l', 'Ucius', 'Vinicios');
+
+-- Update
+update users
+set firstname = 'Lucius',
+    lastname  = 'Vinicius'
+where username = 'l';
+
+-- Read
+select firstname, lastname
+from users
+where username in ('l', 'tomec');
+
+-- Delete
+delete
+from users
+where username = 'cc';
+
+-- Collections
+create table course_unit
+(
+    id           int,
+    abbreviation varchar,
+    name         varchar,
+    ects         int,
+    students     set<tuple<int, int>>,
+    primary key (id)
+);
+
+create table students
+(
+    nmec         int,
+    email        varchar,
+    name         varchar,
+    birthdate    timestamp,
+    course_units set<tuple<int, int>>,
+    primary key (nmec)
+);
+
+/*insert into course_unit(id, abbreviation, name, ects, students)
+values (40337, 'MPEI', 'Métodos Probabilísticos para Engenharia Informática', 6, {});
+
+insert into course_unit(id, abbreviation, name, ects, students)
+values (40379, 'FP', 'Fundamentos de Programação', 6, {});
+
+insert into course_unit(id, abbreviation, name, ects, students)
+values (40380, 'ITW', 'Introdução às Tecnologias Web', 6, {});
+
+insert into students(nmec, email, name, birthdate, course_units)
+values (97939, 'tomecarvalho@ua.pt', 'Tomé Carvalho', '2001-10-10', {(40337, 18), (40379, 18), (40380, 15)});
+
+insert into students(nmec, email, name, course_units)
+values(123456, 'sus@ua.pt', 'Sussus Amogus', '2001-06-28', {});
+
+insert into students(nmec, email, name, course_units)
+values(123456, 'john.doe@ua.pt', 'John Doe', '2000-11-15', {});
+
+select * from students;*/
+
+insert into students(nmec, email, name, birthdate, course_units)
+values (0, 'quitter@ua.pt', 'Shortlived Student', '2000-01-01', {})
+    using ttl 10;

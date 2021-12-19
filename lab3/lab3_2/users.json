@@ -1,0 +1,11 @@
+[
+    {
+      "[json]": "{\"username\": \"johndoe\", \"email\": \"johndoe@cbd.com\", \"name\": \"John Doe\", \"register_date\": \"2019-01-14 00:00:00.000Z\"}"
+    },
+    {
+      "[json]": "{\"username\": \"janedoe\", \"email\": \"janedoe@cbd.com\", \"name\": \"Jane Doe\", \"register_date\": \"2020-05-23 00:00:00.000Z\"}"
+    },
+    {
+      "[json]": "{\"username\": \"mikerotch\", \"email\": \"mikerotch@cbd.com\", \"name\": \"Mike Rotch\", \"register_date\": \"2021-08-02 00:00:00.000Z\"}"
+    }
+  ]

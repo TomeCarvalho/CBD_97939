@@ -1,0 +1,11 @@
+[
+    {
+      "[json]": "{\"author_username\": \"johndoe\", \"upload_ts\": \"2020-11-26 00:00:00.000Z\", \"video_id\": 1}"
+    },
+    {
+      "[json]": "{\"author_username\": \"johndoe\", \"upload_ts\": \"2021-03-12 00:00:00.000Z\", \"video_id\": 2}"
+    },
+    {
+      "[json]": "{\"author_username\": \"janedoe\", \"upload_ts\": \"2021-02-19 00:00:00.000Z\", \"video_id\": 3}"
+    }
+  ]

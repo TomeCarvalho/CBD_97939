@@ -1,0 +1,11 @@
+[
+    {
+      "[json]": "{\"id\": 1, \"upload_ts\": \"2020-11-26 00:00:00.000Z\", \"author_username\": \"johndoe\", \"description\": \"5/7 with rice\", \"name\": \"University of Aveiro Review\", \"tags\": [\"Aveiro\", \"University\"]}"
+    },
+    {
+      "[json]": "{\"id\": 2, \"upload_ts\": \"2021-03-12 00:00:00.000Z\", \"author_username\": \"johndoe\", \"description\": \"Inhale, exhale\", \"name\": \"How to breathe\", \"tags\": [\"Survival\", \"Tutorial\"]}"
+    },
+    {
+      "[json]": "{\"id\": 3, \"upload_ts\": \"2021-02-19 00:00:00.000Z\", \"author_username\": \"janedoe\", \"description\": \"Make sure to visit them!\", \"name\": \"Best touristic spots in Aveiro\", \"tags\": [\"Aveiro\", \"Tourism\"]}"
+    }
+  ]

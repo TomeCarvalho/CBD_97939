@@ -1,0 +1,20 @@
+[
+    {
+      "[json]": "{\"tag\": \"Tutorial\", \"video_id\": 2}"
+    },
+    {
+      "[json]": "{\"tag\": \"University\", \"video_id\": 1}"
+    },
+    {
+      "[json]": "{\"tag\": \"Aveiro\", \"video_id\": 1}"
+    },
+    {
+      "[json]": "{\"tag\": \"Aveiro\", \"video_id\": 3}"
+    },
+    {
+      "[json]": "{\"tag\": \"Survival\", \"video_id\": 2}"
+    },
+    {
+      "[json]": "{\"tag\": \"Tourism\", \"video_id\": 3}"
+    }
+  ]
