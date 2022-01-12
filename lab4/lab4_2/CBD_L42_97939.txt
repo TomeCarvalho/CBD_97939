@@ -1,0 +1,40 @@
+// NMEC: 97939
+
+#1
+MATCH (actor:Person)-[:DIRECTED]->(movie:Movie)<-[:ACTED_IN]-(actor:Person)
+RETURN actor.name, movie.title
+
+#2
+MATCH (actor:Person)-[:ACTED_IN]->(movie:Movie)
+WHERE movie.released > 2005
+RETURN movie, collect(actor)
+
+#3
+MATCH (node1)-[relation]-(node2)
+WITH node1, node2, COUNT(relation) AS n_relations
+WHERE n_relations > 1 AND ID(node1) < ID(node2)
+RETURN node1, node2
+
+// The ID(node1) < ID(node2) condition removes repetition. 
+// For example, the pair (5, 121) is the same as (121, 5). With this, only (5, 121) will be in the results.
+
+#4
+MATCH (person1:Person)-[:REVIEWED]->(movie:Movie)<-[:REVIEWED]-(person2:Person)
+WHERE ID(person1) < ID(person2)
+RETURN movie.title, person1.name, person2.name
+
+#5
+MATCH (actor1:Person)-[:ACTED_IN]->(movie:Movie)<-[:ACTED_IN]-(actor2:Person)
+WITH actor1, actor2, COUNT(movie) AS n_movies
+WHERE ID(actor1) < ID(actor2) AND n_movies > 1
+RETURN actor1, actor2
+
+#6
+MATCH (actor:Person)-[:ACTED_IN]->(apollo13:Movie {title: "Apollo 13"})
+WITH AVG(apollo13.released - actor.born) AS avg_release_age
+RETURN avg_release_age
+
+#7
+MATCH (actor:Person)-[:ACTED_IN]->(movie:Movie)
+WITH AVG(movie.released - actor.born) AS avg_cast_age
+RETURN movie, 
