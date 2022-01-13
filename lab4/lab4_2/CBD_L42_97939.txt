@@ -101,3 +101,9 @@ RETURN distance, count(distance)
 // ID(p1) < ID(p2) used to remove duplicate pairs already ensures p1 <> p2
 
 #16
+MATCH p = shortestPath((p1:Person)-[:ACTED_IN*]-(p2:Person))
+WHERE p1 <> p2
+WITH p1, length(p) AS distance
+RETURN p1, AVG(distance) AS avg_distance
+ORDER BY avg_distance
+LIMIT 10
