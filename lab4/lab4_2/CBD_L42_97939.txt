@@ -36,5 +36,68 @@ RETURN avg_release_age
 
 #7
 MATCH (actor:Person)-[:ACTED_IN]->(movie:Movie)
-WITH AVG(movie.released - actor.born) AS avg_cast_age
-RETURN movie, 
+WITH movie, AVG(movie.released - actor.born) AS avg_cast_age
+RETURN movie, ROUND(avg_cast_age, 2)
+ORDER BY avg_cast_age DESC
+LIMIT 10
+
+#8
+MATCH (actor:Person)-[:ACTED_IN]->(movie:Movie)
+WITH movie AS movie, AVG(movie.released - actor.born) AS avg_cast_age
+ORDER BY avg_cast_age
+LIMIT 1
+MATCH subgraph = ()-[:ACTED_IN]->(movie)
+RETURN subgraph
+
+#9
+MATCH (cusack:Person {name: "John Cusack"}),
+      (moore:Person {name: "Demi Moore"}),
+      p = shortestPath((cusack)-[*]-(moore))
+RETURN p
+
+#10
+MATCH (reeves:Person {name: "Keanu Reeves"}),
+      (cruise:Person {name: "Tom Cruise"}),
+      p = shortestPath((reeves)-[*]-(cruise))
+RETURN length(p)
+
+#11
+MATCH p = shortestPath((jim:Person)-[*]-(kevin:Person))
+WHERE jim.name CONTAINS "Jim" and kevin.name CONTAINS "Kevin"
+RETURN p, length(p)
+ORDER BY length(p)
+LIMIT 1
+
+#12
+MATCH p = shortestPath((cash:Person {name: "Jim Cash"})-[*]-(person:Person))
+WHERE person <> cash
+WITH person, length(p) AS distance
+WHERE distance = 2
+RETURN person
+
+#13
+MATCH p = shortestPath((bacon:Person {name: "Kevin Bacon"})-[*]-(person:Person))
+WHERE person <> bacon
+WITH length(p) AS distance
+RETURN distance
+ORDER BY distance DESC
+LIMIT 1
+
+#14
+MATCH p = shortestPath((p1:Person)-[*]-(p2:Person))
+WHERE p1 <> p2
+WITH length(p) AS distance
+RETURN distance
+ORDER BY distance DESC
+LIMIT 1
+
+#15
+MATCH p = shortestPath((p1:Person)-[*]-(p2:Person))
+WHERE ID(p1) < ID(p2)
+WITH p1, p2, p, length(p) AS distance
+ORDER BY distance
+RETURN distance, count(distance)
+
+// ID(p1) < ID(p2) used to remove duplicate pairs already ensures p1 <> p2
+
+#16
