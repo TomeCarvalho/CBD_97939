@@ -1,0 +1,75 @@
+a)
+Entities:
+    Person
+        - id (unique) (svn_id)
+        - name (real_name)
+        - organization (organization)
+    Project
+        - name (unique) (project_name)
+
+Relationships:
+    (Person)-[:PARTICIPATED_IN {role: project_role}]->(Project)
+    Where project_role is the value of the project_role column in the CSV file
+
+b)
+// https://neo4j.com/developer/guide-import-csv/
+
+// ID constraints
+CREATE CONSTRAINT FOR (project:Project) REQUIRE project.name IS UNIQUE;
+CREATE CONSTRAINT FOR (person:Person) REQUIRE person.id IS UNIQUE;
+
+// Nodes
+LOAD CSV WITH HEADERS FROM "file:///git_selection.csv" AS row
+MERGE (person:Person {id: row.svn_id})
+SET person.name = row.real_name, person.organization = row.organization
+MERGE (project:Project {name: row.project_name})
+
+// Relationships
+LOAD CSV WITH HEADERS FROM "file:///git_selection.csv" AS row
+MATCH (person:Person {id: row.svn_id}), (project:Project {name:row.project_name})
+CREATE (person)-[:PARTICIPATED_IN {role: row.role_on_project, num: row.num}]->(project)
+
+c)
+
+#1
+MATCH (person:Person)
+RETURN person
+
+#2
+MATCH (person:Person)
+RETURN person.name
+
+#3
+MATCH ()-[r:PARTICIPATED_IN]->(project:Project)
+WITH project, COUNT(r) AS num_participations
+WHERE num_participations > 0
+RETURN project
+
+#4
+MATCH (person:Person)-[PARTICIPATED_IN]->(project:Project)
+WITH person, COUNT(DISTINCT(project)) AS num_projects
+RETURN person, num_projects
+
+#5
+MATCH (person:Person)-[PARTICIPATED_IN]->(project:Project)
+WITH person, COUNT(DISTINCT(project)) AS num_projects
+RETURN person, num_projects
+ORDER BY num_projects DESC
+
+#6
+MATCH (person:Person)-[PARTICIPATED_IN]->(project:Project)
+WITH project, COUNT(DISTINCT(person)) AS num_people
+RETURN project, num_people
+
+#7
+MATCH (person:Person)-[PARTICIPATED_IN {role: "Committer"}]->(project:Project)
+WITH project, COUNT(DISTINCT(person)) AS num_people
+RETURN project, num_people
+
+#8
+MATCH (atm:Person {id: "atm"})-[:PARTICIPATED_IN]->(project:Project)<-[:PARTICIPATED_IN]-(person:Person)
+RETURN atm.name, person.id, project.name
+
+#9
+MATCH (atm:Person {id: "atm"})-[:PARTICIPATED_IN {role: "PMC"}]->(project:Project)<-[:PARTICIPATED_IN {role: "Committer"}]-(person:Person)
+RETURN person
