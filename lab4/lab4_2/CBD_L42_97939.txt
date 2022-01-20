@@ -109,3 +109,25 @@ ORDER BY avg_distance
 LIMIT 10
 
 // TODO: Find creativity to make 4 additional queries
+
+#17. Encontre todos os atores que atuaram em filmes dirigidos por James L. Brooks
+MATCH (actor:Person)-[:ACTED_IN]->(Movie)<-[:DIRECTED]-(Person {name: "James L. Brooks"})
+RETURN actor
+
+#18. Encontre todos os atores que eram menores de idade quando atuaram em filmes, bem como o respetivo filme e idade
+MATCH (actor:Person)-[:ACTED_IN]->(movie:Movie)
+WITH actor, movie, (movie.released - actor.born) AS release_age
+WHERE release_age < 18
+RETURN actor, movie, release_age
+
+#19. Encontre todos os seguidores de pessoas que fizeram revisões de pelo menos 3 filmes
+MATCH (follower:Person)-[f:FOLLOWS]->(reviewer:Person)-[r:REVIEWED]->(Movie)
+WITH follower, f, reviewer, COUNT(r) AS num_reviews
+WHERE num_reviews >= 3
+RETURN follower, f, reviewer
+
+#20. Atribua aos filmes que foram reviewed um score, calculado através da média do rating das suas reviews. Ordene-los por rating, por ordem decrescente.
+MATCH ()-[review:REVIEWED]->(movie:Movie)
+RETURN movie, ROUND(AVG(review.rating)) AS score
+ORDER BY score DESC
+
