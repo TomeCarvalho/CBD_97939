@@ -108,8 +108,6 @@ RETURN p1, AVG(distance) AS avg_distance
 ORDER BY avg_distance
 LIMIT 10
 
-// TODO: Find creativity to make 4 additional queries
-
 #17. Encontre todos os atores que atuaram em filmes dirigidos por James L. Brooks
 MATCH (actor:Person)-[:ACTED_IN]->(Movie)<-[:DIRECTED]-(Person {name: "James L. Brooks"})
 RETURN actor
@@ -130,4 +128,3 @@ RETURN follower, f, reviewer
 MATCH ()-[review:REVIEWED]->(movie:Movie)
 RETURN movie, ROUND(AVG(review.rating)) AS score
 ORDER BY score DESC
-
