@@ -140,10 +140,45 @@ public class App implements AutoCloseable {
     // Query 6: Calculate the survivor escape rate for every map and show the corresponding realm for each.
     //   Sort by realm name and then escape rate (lowest to highest)
     private Result mapEscapeRates(Session session) {
-//        match (Player)-[r:PLAYED_AS_KILLER]->(Trial)-[:PLAYED_IN_MAP]->(Map)-[:BELONGS_TO_REALM]->(Realm)
-//        return Realm, Map, (4 - (sum(r.kills * 1.0) / count(r))) / 4 as escape_rate
-//        order by Realm.name, escape_rate
-        return session.run("");
+        return session.run("MATCH (Player)-[r:PLAYED_AS_KILLER]->(Trial)-[:PLAYED_IN_MAP]->(Map)-[:BELONGS_TO_REALM]->(Realm)\n" +
+                "RETURN Realm, Map, (4 - (SUM(r.kills * 1.0) / COUNT(r))) / 4 AS escape_rate\n" +
+                "ORDER BY Realm.name, escape_rate");
+    }
+
+    // Query 7: Rank the survivor characters by popularity (times played as)
+    //   Sort by popularity (highest to lowest)
+    private Result survivorsPopularity(Session session) {
+        return session.run("MATCH (Player)-[r:PLAYED_AS_SURVIVOR]->(Trial)\n" +
+                "RETURN r.survivor, COUNT(r.survivor) AS times_played\n" +
+                "ORDER BY times_played DESC");
+    }
+
+    // Query 8: Determine the average number of kills and hooks per killer match result
+    // (Entity Displeased / Brutal Killer / Ruthless Killer / Merciless Killer)
+    //   Round the averages to 1 decimal point
+    //   Sort by average kills, followed by avg_hooks, from lowest to highest
+    private Result killerResultsAvgs(Session session) {
+        return session.run("MATCH (Player)-[r:PLAYED_AS_KILLER]->(Trial)\n" +
+                "RETURN r.result, ROUND(AVG(r.kills), 1) AS avg_kills, ROUND(AVG(r.hooks), 1) AS avg_hooks\n" +
+                "ORDER BY avg_kills, avg_hooks");
+    }
+
+    // Query 9: Calculate the average bloodpoints per minute for both roles, killer and survivor
+    //   Round the values to the nearest integer
+    private Result avgBpPerMinByRole(Session session) {
+        return session.run("MATCH (Player)-[r:PLAYED_AS_KILLER]->(Trial)\n" +
+                "WITH toInteger(ROUND(AVG(r.bloodpoints) / AVG(Trial.length))) AS avg_killer_bp_per_min\n" +
+                "MATCH (Player)-[r:PLAYED_AS_SURVIVOR]->(Trial)\n" +
+                "RETURN avg_killer_bp_per_min, toInteger(ROUND(AVG(r.bloodpoints) / AVG(Trial.length))) AS avg_survivor_bp_per_min");
+    }
+
+    // Query 10: For each map, show the average kills and hooks for each killer
+    //   Sort by map name (alphabetical) and then average kills followed by hooks (highest to lowest)
+    private Result avgKillerKillsPerMap(Session session) {
+        return session.run("MATCH (Player)-[r:PLAYED_AS_KILLER]->(Trial)-[:PLAYED_IN_MAP]->(Map)\n" +
+                "WITH Map.name AS map, r.killer AS killer, AVG(r.kills) AS avg_kills, AVG(r.hooks) AS avg_hooks\n" +
+                "ORDER BY map, avg_kills DESC, avg_hooks DESC\n" +
+                "RETURN map, killer, avg_kills, avg_hooks");
     }
 
     public static void main(String[] args) throws Exception {
@@ -155,6 +190,11 @@ public class App implements AutoCloseable {
                 System.out.println(app.trialsWithSurvivorGroup(session, Arrays.asList("praxz", "Trivialiac", "ScottJund")));
                 System.out.println(app.avgKillsPerKillerPerPlayer(session));
                 System.out.println(app.playtimes(session));
+                System.out.println(app.mapEscapeRates(session));
+                System.out.println(app.survivorsPopularity(session));
+                System.out.println(app.killerResultsAvgs(session));
+                System.out.println(app.avgBpPerMinByRole(session));
+                System.out.println(app.avgKillerKillsPerMap(session));
             }
         }
     }
